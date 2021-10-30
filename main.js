@@ -1,8 +1,18 @@
 import Bubble from "./src/models/Bubble.js";
 
+// CONST
 const bubblesContainer = document.getElementById('bubbles-container');
-let generatedBubbles = generateBubbles();
+const BUBBLE_MAX_SIZE = 300;
+const BUBBLE_MIN_SIZE = 20;
+const BUBBLE_MAX_SPEED = 1.2;
+const BUBBLE_MIN_SPEED = 0.2;
 
+// Variables
+let mainTimeout;
+let generatedBubbles = generateBubbles();
+let bubbleDeletedEvent = false;
+
+// Addin Event listener
 bubblesContainer.addEventListener('click', createNewBubble, false);
 
 window.onload = function() {
@@ -10,6 +20,7 @@ window.onload = function() {
 }
 
 function main(){
+    bubbleDeletedEvent = false;
     refreshBubblePosition(generatedBubbles);
 }
 
@@ -21,8 +32,8 @@ function generateBubbles(){
 
         let xPosition = Math.floor(Math.random() * visualViewport.width);
         let yPosition = Math.floor(Math.random() * visualViewport.height);
-        let width = Math.floor(Math.random() * (300-20) + 20);
-        let speed = Math.random() * (1.2-0.2) + 0.2;
+        let width = Math.floor(Math.random() * (BUBBLE_MAX_SIZE-BUBBLE_MIN_SIZE) + BUBBLE_MIN_SIZE);
+        let speed = Math.random() * (BUBBLE_MAX_SPEED - BUBBLE_MIN_SPEED) + BUBBLE_MIN_SPEED;
         let verticalDirection = Math.random() < 0.5;
         let horizontalDirection = Math.random() < 0.5;
 
@@ -31,7 +42,7 @@ function generateBubbles(){
         var newBubbleElement = document.createElement("div");
         newBubbleElement.setAttribute("class", "bubble");
 
-        newBubbleElement.setAttribute("id", i);
+        newBubbleElement.setAttribute("id", newBubble.id);
         newBubbleElement.style.top = xPosition + "px";
         newBubbleElement.style.left = yPosition + "px";
         newBubbleElement.style.width = width + "px";
@@ -42,7 +53,7 @@ function generateBubbles(){
         newBubbleElement.addEventListener("mouseleave", onMouseLeave, false);
         newBubbleElement.addEventListener("click", onBubbleClick, false);
 
-        bubblesContainer.appendChild(newBubbleElement)
+        bubblesContainer.appendChild(newBubbleElement);
         
         bubbles.push(newBubble);
     }
@@ -52,80 +63,90 @@ function generateBubbles(){
 
 function refreshBubblePosition(bubbles){
     
-    setInterval(() => {
-        for(var i=0; i < bubbles.length; i++){
+    mainTimeout = setInterval(() => {
+        bubbles.some(bubble => {
+
+            if(bubbleDeletedEvent){
+                 return true;
+            }
+
+            // If bubble is hovered skip it
+            if(bubble.getIsHovered() ){
+                return;
+            }
+
             // Getting Position
-            let yPos = bubbles[i].getYPosition();
-            let xPos = bubbles[i].getXPosition();
+            let yPos = bubble.getYPosition();
+            let xPos = bubble.getXPosition();
 
             // Getting Bubble Size
-            let size = bubbles[i].getWidth();
+            let size = bubble.getWidth();
 
             // Getting Bubble speed
-            let speed = bubbles[i].getSpeed();
+            let speed = bubble.getSpeed();
 
-            if(bubbles[i].getIsBeingCreated()){
-                if(size != document.getElementById(bubbles[i].getId()).offsetWidth){
-                    let currentSize = document.getElementById(bubbles[i].getId()).offsetWidth;
-                    document.getElementById(bubbles[i].getId()).style.width = currentSize + 1 + "px";
-                    document.getElementById(bubbles[i].getId()).style.height = currentSize + 1 + "px";
+            if(bubble.getIsBeingCreated()){
+                document.getElementById(bubble.id).style.zIndex = 1000;
+                if(size != document.getElementById(bubble.getId()).offsetWidth){
+                    let currentSize = document.getElementById(bubble.getId()).offsetWidth;
+                    document.getElementById(bubble.getId()).style.width = currentSize + 1 + "px";
+                    document.getElementById(bubble.getId()).style.height = currentSize + 1 + "px";
                 } else {
-                    bubbles[i].setIsBeingCreated(false);
+                    document.getElementById(bubble.id).style.zIndex = 0;
+                    bubble.setIsBeingCreated(false);
                 }
-                continue;
+                return;
             }
 
-            if(bubbles[i].getIsHovered()){
-                continue;
-            }
-
-            if(bubbles[i].getVerticalDirection()){
+            if(bubble.getVerticalDirection()){
                 if(yPos <= 0){
-                    bubbles[i].setVerticalDirection(!bubbles[i].getVerticalDirection())
+                    bubble.setVerticalDirection(!bubble.getVerticalDirection())
                 }
                 yPos -= speed;
             } else {
                 if(yPos >= visualViewport.height || yPos + size >= visualViewport.height ){
-                    bubbles[i].setVerticalDirection(!bubbles[i].getVerticalDirection())
+                    bubble.setVerticalDirection(!bubble.getVerticalDirection())
                 }
                 yPos += speed;
             }
 
-            if(bubbles[i].getHorizontalDirection()){
+            if(bubble.getHorizontalDirection()){
                 if(xPos <= 0){
-                    bubbles[i].setHorizontalDirection(!bubbles[i].getHorizontalDirection())
+                    bubble.setHorizontalDirection(!bubble.getHorizontalDirection())
                 }
                 xPos -= speed;
             } else {
                 if(xPos >= visualViewport.width || xPos + size >= visualViewport.width){
-                    bubbles[i].setHorizontalDirection(!bubbles[i].getHorizontalDirection())
+                    bubble.setHorizontalDirection(!bubble.getHorizontalDirection())
                 }
                 xPos += speed;
             }
 
-            bubbles[i].setYPosition(yPos);
-            bubbles[i].setXPosition(xPos);
-            document.getElementById('bubbles-container').children[i].style.top = yPos + "px";
-            document.getElementById('bubbles-container').children[i].style.left = xPos + "px";
-        }
+            bubble.setYPosition(yPos);
+            bubble.setXPosition(xPos);
+            document.getElementById('bubbles-container').children[bubble.id].style.top = yPos + "px";
+            document.getElementById('bubbles-container').children[bubble.id].style.left = xPos + "px";
+        })
     }, 5)
 }
 
 function createNewBubble(event){
 
-    let canCreateNewBubble = !generatedBubbles.some(bubble =>
-        bubble.getIsHovered() === true
-    );
+    let previousBubbleSize = event.target != bubblesContainer ? Math.ceil((event.target.style.width.split("p")[0]) / 4) : null;
 
-    if(!canCreateNewBubble){
+    if(event.target != bubblesContainer && previousBubbleSize <= BUBBLE_MIN_SIZE){
+        return;
+    }
+
+    if(generatedBubbles.some(bubble=> bubble.getIsHovered())){
         return;
     }
 
     let id = generatedBubbles.length;
-    let width = Math.floor(Math.random() * (300-20) + 20);
+    let width = previousBubbleSize ?? Math.floor(Math.random() * (BUBBLE_MAX_SIZE-BUBBLE_MIN_SIZE) + BUBBLE_MIN_SIZE);
     let xPosition = event.pageX - (width /2);
     let yPosition = event.pageY - (width /2);
-    let speed = Math.random() * (1.2-0.2) + 0.2;
+    let speed = Math.random() * (BUBBLE_MAX_SPEED-BUBBLE_MIN_SPEED) + BUBBLE_MIN_SPEED;
     let verticalDirection = Math.random() < 0.5;
     let horizontalDirection = Math.random() < 0.5;
 
@@ -171,7 +192,27 @@ function onMouseLeave(event){
 }
 
 function onBubbleClick(event){
-    console.log("test");
+
+    bubbleDeletedEvent = true;
+    bubblesContainer.removeEventListener('click', createNewBubble);
+    clearTimeout(mainTimeout);
+    generatedBubbles.splice(generatedBubbles.findIndex(bubble => bubble.id == event.target.id), 1);
+    document.getElementById(event.target.id).remove();
+
+    generatedBubbles.forEach((bubble, index) => {
+        document.getElementById(bubble.id).setAttribute("id", index);
+        bubble.id = index;
+    })
+
+    for(let i = 0; i < 4; i++){
+        createNewBubble(event);
+    }
+
+    setTimeout(()=>{
+        bubblesContainer.addEventListener('click', createNewBubble, false);
+    }, 150)
+
+    main();
 }
 
 function getRandomColor() {
