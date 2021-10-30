@@ -71,59 +71,59 @@ function refreshBubblePosition(bubbles){
             }
 
             // If bubble is hovered skip it
-            if(bubble.getIsHovered() ){
+            if(bubble.isHovered){
                 return;
             }
 
             // Getting Position
-            let yPos = bubble.getYPosition();
-            let xPos = bubble.getXPosition();
+            let yPos = bubble.yPosition;
+            let xPos = bubble.xPosition;
 
             // Getting Bubble Size
-            let size = bubble.getWidth();
+            let size = bubble.width;
 
             // Getting Bubble speed
-            let speed = bubble.getSpeed();
+            let speed = bubble.speed;
 
-            if(bubble.getIsBeingCreated()){
+            if(bubble.beingCreated){
                 document.getElementById(bubble.id).style.zIndex = 1000;
-                if(size != document.getElementById(bubble.getId()).offsetWidth){
-                    let currentSize = document.getElementById(bubble.getId()).offsetWidth;
-                    document.getElementById(bubble.getId()).style.width = currentSize + 1 + "px";
-                    document.getElementById(bubble.getId()).style.height = currentSize + 1 + "px";
+                if(size != document.getElementById(bubble.id).offsetWidth){
+                    let currentSize = document.getElementById(bubble.id).offsetWidth;
+                    document.getElementById(bubble.id).style.width = currentSize + 1 + "px";
+                    document.getElementById(bubble.id).style.height = currentSize + 1 + "px";
                 } else {
                     document.getElementById(bubble.id).style.zIndex = 0;
-                    bubble.setIsBeingCreated(false);
+                    bubble.beingCreated = false;
                 }
                 return;
             }
 
-            if(bubble.getVerticalDirection()){
+            if(bubble.verticalDirection){
                 if(yPos <= 0){
-                    bubble.setVerticalDirection(!bubble.getVerticalDirection())
+                    bubble.verticalDirection = !bubble.verticalDirection;
                 }
                 yPos -= speed;
             } else {
                 if(yPos >= visualViewport.height || yPos + size >= visualViewport.height ){
-                    bubble.setVerticalDirection(!bubble.getVerticalDirection())
+                    bubble.verticalDirection = !bubble.verticalDirection;
                 }
                 yPos += speed;
             }
 
-            if(bubble.getHorizontalDirection()){
+            if(bubble.horizontalDirection){
                 if(xPos <= 0){
-                    bubble.setHorizontalDirection(!bubble.getHorizontalDirection())
+                    bubble.horizontalDirection = !bubble.horizontalDirection;
                 }
                 xPos -= speed;
             } else {
                 if(xPos >= visualViewport.width || xPos + size >= visualViewport.width){
-                    bubble.setHorizontalDirection(!bubble.getHorizontalDirection())
+                    bubble.horizontalDirection = !bubble.horizontalDirection;
                 }
                 xPos += speed;
             }
 
-            bubble.setYPosition(yPos);
-            bubble.setXPosition(xPos);
+            bubble.yPosition = yPos;
+            bubble.xPosition = xPos;
             document.getElementById('bubbles-container').children[bubble.id].style.top = yPos + "px";
             document.getElementById('bubbles-container').children[bubble.id].style.left = xPos + "px";
         })
@@ -138,7 +138,7 @@ function createNewBubble(event){
         return;
     }
 
-    if(generatedBubbles.some(bubble=> bubble.getIsHovered())){
+    if(generatedBubbles.some(bubble=> bubble.isHovered)){
         return;
     }
 
@@ -182,12 +182,12 @@ function createNewBubble(event){
 }
 
 function onMouseOver(event){
-    generatedBubbles[event.target.id].setIsHovered(true);
+    generatedBubbles[event.target.id].isHovered = true;
     document.getElementById(event.target.id).style.zIndex = 1000;
 }
 
 function onMouseLeave(event){
-    generatedBubbles[event.target.id].setIsHovered(false);
+    generatedBubbles[event.target.id].isHovered = false;
     document.getElementById(event.target.id).style.zIndex = 0;
 }
 
