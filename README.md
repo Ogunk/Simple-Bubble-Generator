@@ -1,5 +1,7 @@
 # **A Simple Bubble Generator**
 
+Demo here : https://ogunk.github.io/Simple-Bubble-Generator/
+
 This is just a simple side project for fun.
 
 - 10 bubbles will be generated on the page and you will be able to hover them, which will stop the hovered bubble movement.
